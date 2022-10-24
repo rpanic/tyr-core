@@ -1,0 +1,46 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.7.10'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.7.10'
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.0'
+}
+
+group 'org.example'
+version '1.0'
+
+repositories {
+    mavenCentral()
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.7.10"
+
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1"
+    implementation 'com.sksamuel.hoplite:hoplite-core:1.4.16'
+    implementation 'com.sksamuel.hoplite:hoplite-yaml:1.4.16'
+
+    implementation "io.insert-koin:koin-core:3.2.2"
+
+//    implementation 'io.github.microutils:kotlin-logging-jvm:3.0.2'
+//    implementation 'org.slf4j:slf4j-api:1.7.5'
+
+//    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+//    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+application {
+    mainClass = 'MainKt'
+}
+tasks {
+    shadowJar {
+        manifest {
+            attributes "Main-Class": "MainKt"
+        }
+    }
+}

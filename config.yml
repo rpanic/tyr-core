@@ -1,0 +1,5 @@
+network:
+  bootstrapNode: "128.130.122.101:18018"
+  maxPeers: 10
+storage:
+  storageDir: "data"

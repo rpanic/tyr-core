@@ -31,7 +31,7 @@ class PeerPool(bootstrapPeers: List<Peer>) : KoinComponent {
 
     fun newConnection(s: Socket){
         val address = s.inetAddress!!
-        val peer = peers.find { it.getPeerConnection(openIfNecessary = false).conn.socket?.inetAddress == address }
+        val peer = peers.toList().find { it.getPeerConnection(openIfNecessary = false).conn.socket?.inetAddress == address }
         if(peer != null){
             //TODO Don´t know what to do then
             s.close()
@@ -48,11 +48,11 @@ class PeerPool(bootstrapPeers: List<Peer>) : KoinComponent {
 
             while(true){
 
-                peers.forEach {
+                peers.toList().forEach {
                     it.getPeerConnection() //Initializes peer if not yet
                 }
 
-                val active = peers.count { it.isActive() }
+                val active = peers.toList().count { it.isActive() }
                 println("Peers: ${peers.size} ($active active)")
 
                 //Add peers if necessary

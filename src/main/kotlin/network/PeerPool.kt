@@ -48,57 +48,63 @@ class PeerPool(bootstrapPeers: List<Peer>) : KoinComponent {
 
             while(true){
 
-                peers.toList().forEach {
-                    it.getPeerConnection() //Initializes peer if not yet
-                }
+                try{
 
-                val active = peers.toList().count { it.isActive() }
-                println("Peers: ${peers.size} ($active active)")
-
-                //Add peers if necessary
-                val peers = this.getPeers()
-                if(peers.size < config.network.maxPeers){
-
-                    val peer = peers.minBy { it.lastAskedForPeers }
-                    val newPeers = peer.getPeerConnection().getPeers()
-
-                    if(newPeers.isOk()) {
-
-                        newPeers.get().peers.filter { p ->
-                            peers.all { it.getAddress() !== p }
-                        }.forEach {
-                            try {
-                                val newPeer = Peer.fromString(it)
-                                if (newPeer != null) {
-                                    addPeer(newPeer)
-                                    println("Added peer at ${newPeer.getAddress()}")
-                                } else {
-                                    println("Couldn´t add peer $it")
-                                }
-                            }catch (e: Exception){
-                                System.err.println("Error while adding new peer: ")
-                                e.printStackTrace()
-                            }
-                        }
-                        peer.lastAskedForPeers = System.currentTimeMillis()
+                    peers.toList().forEach {
+                        it.getPeerConnection() //Initializes peer if not yet
                     }
+
+                    val active = peers.toList().count { it.isActive() }
+                    println("Peers: ${peers.size} ($active active)")
+
+                    //Add peers if necessary
+                    val peers = this.getPeers()
+                    if(peers.size < config.network.maxPeers){
+
+                        val peer = peers.minBy { it.lastAskedForPeers }
+                        val newPeers = peer.getPeerConnection().getPeers()
+
+                        if(newPeers.isOk()) {
+
+                            newPeers.get().peers.filter { p ->
+                                peers.all { it.getAddress() !== p }
+                            }.forEach {
+                                try {
+                                    val newPeer = Peer.fromString(it)
+                                    if (newPeer != null) {
+                                        addPeer(newPeer)
+                                        println("Added peer at ${newPeer.getAddress()}")
+                                    } else {
+                                        println("Couldn´t add peer $it")
+                                    }
+                                }catch (e: Exception){
+                                    System.err.println("Error while adding new peer: ")
+                                    e.printStackTrace()
+                                }
+                            }
+                            peer.lastAskedForPeers = System.currentTimeMillis()
+                        }
+                    }
+
+                    //Check peers for timeouts
+    //                this.peers.sortedBy { it.lastSeen }.filterNot(livenessFilter()).take(1).forEach {
+    //                    Thread {
+    //                        try {
+    //                            println("Hello check ${it.getAddress()}")
+    //                            val hello = it.getPeerConnection().hello()
+    //                            println("Hello check succeeded ${it.getAddress()}")
+    //                        } catch (e: Exception) {
+    //                            this.peers.remove(it)
+    //                            println("Peer ${it.getAddress()} removed from pool")
+    //                        }
+    //                    }.start()
+    //                }
+
+                    poolStorage.storePeerList(this)
+                }catch(e: Exception){
+                    println("Peerlist exception, caught")
+                    e.printStackTrace()
                 }
-
-                //Check peers for timeouts
-//                this.peers.sortedBy { it.lastSeen }.filterNot(livenessFilter()).take(1).forEach {
-//                    Thread {
-//                        try {
-//                            println("Hello check ${it.getAddress()}")
-//                            val hello = it.getPeerConnection().hello()
-//                            println("Hello check succeeded ${it.getAddress()}")
-//                        } catch (e: Exception) {
-//                            this.peers.remove(it)
-//                            println("Peer ${it.getAddress()} removed from pool")
-//                        }
-//                    }.start()
-//                }
-
-                poolStorage.storePeerList(this)
 
                 Thread.sleep(5000L)
             }

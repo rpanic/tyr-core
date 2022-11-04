@@ -39,7 +39,7 @@ class ObjectStorage {
 
     companion object {
         val typeMap = mapOf(
-            "transaction" to Transaction::class, //TODO
+            "transaction" to Transaction::class,
             "block" to Block::class
         )
     }

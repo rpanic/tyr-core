@@ -17,7 +17,6 @@ class PeerConnection(val peer: Peer) {
             hello()
         }catch(e: Exception){
             println("Connection to peer $peer failed")
-            //TODO Remove from PeerPool?
             null
         }
     }

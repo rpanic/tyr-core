@@ -4,12 +4,12 @@ import java.net.Socket
 
 class PeerConnection(val peer: Peer) {
 
-    var conn: MultiWayConnection = MultiWayConnection()
+    var conn: MultiWayConnection = MultiWayConnection(this)
 
     var hello: Promise<Hello> = Promise()
 
-    fun initOpening(){
-        try{
+    fun initOpening() : PromiseResult<Hello>?{
+        return try{
             conn.init(openSocket())
             conn.setConnectionLost(::openSocket)
             conn.handler = Node.incomingHandler()
@@ -18,6 +18,7 @@ class PeerConnection(val peer: Peer) {
         }catch(e: Exception){
             println("Connection to peer $peer failed")
             //TODO Remove from PeerPool?
+            null
         }
     }
 
@@ -48,7 +49,7 @@ class PeerConnection(val peer: Peer) {
         return res
     }
 
-    fun hello() : PromiseResult<Hello> = peerConnectionBody{
+    fun hello() : PromiseResult<Hello> = peerConnectionBody {
 
         val res = this.conn.sendMessage<Hello, Hello>(Hello("0.8.0", Config.CLIENT_VERSION), "hello")
         val hello = res.await()
@@ -57,6 +58,12 @@ class PeerConnection(val peer: Peer) {
         }
 
         hello
+
+    }
+
+    fun broadcast(msg: String) {
+
+        this.conn.sendMessageNoResponse(msg)
 
     }
 

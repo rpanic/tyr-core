@@ -1,7 +1,6 @@
 import handlers.MainHandler
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import network.Hello
+import network.MultiWayConnection
+import network.Peer
 import network.PeerPool
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -36,23 +35,19 @@ object Node : KoinComponent {
     fun handleConnectionAsync(conn: Socket){
         Thread {
 
-            //Send Hello message -> Done in PeerConnection
-//            val writer = conn.getOutputStream().writer()
-//            writer.write(Json.encodeToString(Hello("0.8.0", Config.CLIENT_VERSION)) + "\n")
-//            writer.flush()
-
             peerPool.newConnection(conn)
-
-//            while(conn.isConnected){
-//                val t = conn.getInputStream().reader().readText()
-//                println("Received ss: $t")
-//            }
 
         }.start()
     }
 
-    fun incomingHandler() = { s: String, type: String ->
-        mainHandler.handle(s, type)
+    fun incomingHandler() = { conn: MultiWayConnection, s: String, type: String ->
+        mainHandler.handle(conn, s, type)
+    }
+
+    fun broadcast(msg: String, excludes: List<Peer>){
+        peerPool.getPeers().filter { it !in excludes }.forEach {
+            it.getPeerConnection()?.broadcast(msg)
+        }
     }
 
 

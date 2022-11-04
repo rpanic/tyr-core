@@ -1,6 +1,5 @@
 package storage
 
-import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 object StorageModule {
@@ -12,6 +11,10 @@ object StorageModule {
         single {
             get<PeerPoolLoader>().loadPeerList()
         }
+        single {
+            ObjectStorage()
+        }
+
     }
 
 }

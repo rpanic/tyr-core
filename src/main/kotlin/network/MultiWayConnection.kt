@@ -7,7 +7,7 @@ import java.io.OutputStreamWriter
 import java.net.Socket
 import java.util.*
 
-class MultiWayConnection() {
+class MultiWayConnection(val underlyingConnection: PeerConnection) {
 
     var out: OutputStreamWriter? = null
     var input: Scanner? = null
@@ -128,17 +128,19 @@ class MultiWayConnection() {
 
     }
 
-    var handler: ((String, String) -> String)? = null
+    var handler: ((MultiWayConnection, String, String) -> String)? = null
 
     private fun handleIncomingMessage(s: String, type: String) {
 
         println("Received new request $s")
         if(handler != null && out != null){
 
-            val res = handler!!(s, type)
-            out!!.write(res + "\n")
-            out!!.flush()
-            println("Replied to request with $res")
+            val res = handler!!(this, s, type)
+            if(res.isNotEmpty()){
+                out!!.write(res + "\n")
+                out!!.flush()
+                println("Replied to request with $res")
+            }
 
         }else{
             println("No message handler set!!")

@@ -10,14 +10,20 @@ class PeerPoolLoader {
     fun loadPeerList() : PeerPool {
 
         val file = Config.config.storage.getStorageDirectory().resolve("peers.txt")
-        val peers = if(file.exists()){
+        var peers = if(file.exists()){
             file.readLines().mapNotNull(Peer.Companion::fromString)
         }else{
+            listOf()
+        }
+        if(peers.isEmpty()){
             val bootstrapPeer = Peer.fromString(Config.config.network.bootstrapNode)
                 ?: throw IllegalArgumentException("Bootstrap peer could not be initialized")
-            listOf(bootstrapPeer)
+            peers = listOf(bootstrapPeer)
         }
-        return PeerPool(peers)
+
+        return PeerPool(
+            peers.filter { it.ip.hostAddress !in PeerPool.PEER_BLACKLIST }
+        )
 
     }
 

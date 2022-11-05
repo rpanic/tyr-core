@@ -3,13 +3,14 @@ import java.io.File
 
 data class Config (
     val network: NetworkConfig,
-    val storage: StorageConfig
+    val storage: StorageConfig,
+    val logging: LoggingConfig
 ){
     companion object{
 
         val config: Config = ConfigLoader().loadConfigOrThrow<Config>(File(System.getProperty("user.dir") + File.separator + "config.yml"))
 
-        val CLIENT_VERSION = "Tyr-Core 0.1"
+        val CLIENT_VERSION = "Tyr-Core 0.2"
 
     }
 }
@@ -30,3 +31,7 @@ data class StorageConfig (
         return file
     }
 }
+
+data class LoggingConfig(
+    val json: Boolean = true
+)

@@ -8,6 +8,7 @@ import java.net.InetAddress
 import java.net.Socket
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicInteger
+import utils.*
 
 class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
 
@@ -48,7 +49,7 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
 
     fun attemptToConnect(peer: Peer) {
 
-        println("Attempting to connect to ${peer.getAddress()}")
+        debug("peer" to peer.getAddress()) { "Attempting to connect to ${peer.getAddress()}" }
 
         activeAttempts.incrementAndGet()
 
@@ -59,9 +60,9 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
             peer.getOrOpenPeerConnection { res ->
                 if (res != null && res.isOk()) {
                     peers += peer
-                    println("Added peer ${peer.getAddress()}")
+                    info("peer" to peer.getAddress()) { "Added peer ${peer.getAddress()}" }
                 } else {
-                    println("Dropped peer ${peer.getAddress()} from queue")
+                    info ("peer" to peer.getAddress()) { "Dropped peer ${peer.getAddress()} from queue" }
                 }
                 activeAttempts.decrementAndGet()
             }
@@ -89,7 +90,7 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
             val newPeer = Peer(address, s.port)
             newPeer.initWithConnection(s)
             addPeer(newPeer)
-            println("Added receiving peer connection $newPeer")
+            info ("peer" to newPeer.getAddress()) { "Added receiving peer connection $newPeer" }
         }
     }
 
@@ -109,7 +110,7 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
                     }
 
                     val active = peers.toList().count { it.isActive() }
-                    println("Peers: ${peers.size} ($active active)")
+                    info { "Peers: ${peers.size} ($active active)" }
 
                     //Add peers if necessary
                     val peers = this.getPeers()
@@ -128,14 +129,14 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
                                         val newPeer = Peer.fromString(it)
                                         if (newPeer != null) {
                                             if(addPeer(newPeer))
-                                                println("Added peer at ${newPeer.getAddress()} to queue")
+                                                info("peer" to newPeer.getAddress()) { "Added peer at ${newPeer.getAddress()} to queue" }
                                             else
-                                                println("Peer declined: ${newPeer.getAddress()}")
+                                                info("peer" to newPeer.getAddress()) { "Peer declined: ${newPeer.getAddress()}" }
                                         } else {
-                                            println("Couldn´t add peer $it to queue")
+                                            info("peer" to it) { "Couldn't add peer $it to queue" }
                                         }
                                     } catch (e: Exception) {
-                                        System.err.println("Error while adding new peer: ")
+                                        error { "Error while adding new peer: \n${e.message}" }
                                         e.printStackTrace()
                                     }
                                 }
@@ -160,7 +161,7 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
 
                     poolStorage.storePeerList(this)
                 }catch(e: Exception){
-                    println("Peerlist exception, caught")
+                    error { "Peerlist exception, caught: ${e.message}" }
                     e.printStackTrace()
                 }
 
@@ -191,7 +192,7 @@ data class Peer(
             newCon.initWithSocket(s)
             peerConnection = newCon
         }else{
-            println("Error 36")
+            error { "Error 36" }
         }
     }
 

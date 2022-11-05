@@ -13,6 +13,7 @@ import network.Object
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import storage.ObjectStorage
+import utils.debug
 
 class ObjectHandler : Handler, KoinComponent {
 
@@ -56,7 +57,7 @@ class ObjectHandler : Handler, KoinComponent {
                 if(txValidator.validate(tx)){
 
                     storage.put(tx.hash(), tx)
-                    println("Stored new tx ${tx.hash()}, gossiping")
+                    debug("object" to tx.hash()) { "Stored new tx ${tx.hash()}, gossiping" }
 
                     Thread {
                         Node.broadcast(Json.encodeToString(IHaveObject(tx.hash())), listOf(this.conn.underlyingConnection.peer))

@@ -3,8 +3,10 @@ package network
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import utils.debug
 import java.io.OutputStreamWriter
 import java.net.Socket
+import java.net.SocketException
 import java.util.*
 
 class MultiWayConnection(val underlyingConnection: PeerConnection) {
@@ -28,11 +30,26 @@ class MultiWayConnection(val underlyingConnection: PeerConnection) {
 
     val queue = mutableListOf<ResponsePending>()
 
-    fun <T> connected(f: (Scanner, OutputStreamWriter) -> T) : T{
+    private fun <T> connected(f: (Scanner, OutputStreamWriter) -> T) = connected(f, 0)
+
+    private fun <T> connected(f: (Scanner, OutputStreamWriter) -> T, tried: Int = 0) : T{
+
+        if(tried >= 2) throw SocketException("Repeated tries didn´t help")
+
         if(socket == null || socket!!.isClosed){
             reconnect()
         }
-        return f(input!!, out!!)
+        try {
+
+            return f(input!!, out!!)
+
+        } catch (e: SocketException){
+            try{
+                this.socket?.close()
+            }catch(e: Exception){}
+            this.socket = null
+            return connected(f, tried + 1)
+        }
     }
 
     fun isConnected() : Boolean {
@@ -117,7 +134,7 @@ class MultiWayConnection(val underlyingConnection: PeerConnection) {
             val i = queue.indexOfFirst { it.type == type }
             if (i >= 0) {
                 val p = queue.removeAt(i)
-                println("Received reply for type ${p.type}: $s")
+                debug { "Received reply for type ${p.type}: $s" }
                 p.promise.resolve(s)
             } else {
                 handleIncomingMessage(s, type)
@@ -132,18 +149,18 @@ class MultiWayConnection(val underlyingConnection: PeerConnection) {
 
     private fun handleIncomingMessage(s: String, type: String) {
 
-        println("Received new request $s")
+        debug ("messagetype" to type) { "Received new request $s" }
         if(handler != null && out != null){
 
             val res = handler!!(this, s, type)
             if(res.isNotEmpty()){
                 out!!.write(res + "\n")
                 out!!.flush()
-                println("Replied to request with $res")
+                debug ("messagetype" to type) { "Replied to request with $res" }
             }
 
         }else{
-            println("No message handler set!!")
+            error { "No message handler set!!" }
         }
 
     }

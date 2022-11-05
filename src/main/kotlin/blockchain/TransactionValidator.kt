@@ -1,11 +1,14 @@
 package blockchain
 
+import cafe.cryptography.ed25519.Ed25519PublicKey
+import cafe.cryptography.ed25519.Ed25519Signature
 import model.Transaction
-import net.i2p.crypto.eddsa.EdDSAEngine
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import storage.ObjectStorage
 import utils.fromHex
+import java.nio.charset.Charset
+import java.security.PublicKey
 
 class TransactionValidator : KoinComponent{
 
@@ -13,12 +16,12 @@ class TransactionValidator : KoinComponent{
 
     fun validateFormat(tx: Transaction) : Boolean{
 
-        return VerifyChain()
+        return VerifyChain("verifyTxFormat")
             .step {
                 tx.inputs != null
             }
             .step {
-                tx.inputs!!.all { it.outpoint.index > 0 && it.sig.fromHex() != null && it.outpoint.txid.fromHex() != null }
+                tx.inputs!!.all { it.outpoint.index >= 0 && it.sig?.fromHex() != null && it.outpoint.txid.fromHex() != null }
             }.step {
                 tx.outputs.all { it.pubkey.fromHex() != null }
             }
@@ -28,8 +31,6 @@ class TransactionValidator : KoinComponent{
 
     fun validate(tx: Transaction) : Boolean {
 
-        val ecdsa = EdDSAEngine.getInstance(EdDSAEngine.SIGNATURE_ALGORITHM)
-
         //Coinbase tx
         if(tx.inputs == null && tx.outputs.isNotEmpty()){
             return true
@@ -37,7 +38,7 @@ class TransactionValidator : KoinComponent{
 
         if(!validateFormat(tx)) return false
 
-        return VerifyChain().step {
+        return VerifyChain("verifyTxContent").step {
             tx.inputs!!.all {
                 val outpoint = db.get<Transaction>(it.outpoint.txid)
                 if(outpoint != null){
@@ -48,7 +49,18 @@ class TransactionValidator : KoinComponent{
             }
         }.step {
             tx.inputs!!.all { input ->
-                input.sig.fromHex()?.let { ecdsa.verify(it) } ?: false
+                val output = db.get<Transaction>(input.outpoint.txid)!!.outputs[input.outpoint.index]
+                val msg = tx.jsonWithoutSig()
+                input.sig?.fromHex()?.let {
+
+                    println(msg)
+
+                    val pub = Ed25519PublicKey.fromByteArray(output.pubkey.fromHex()!!)
+                    val sig = Ed25519Signature.fromByteArray(it)
+                    println(pub.verify(msg.toByteArray(Charset.forName("UTF-8")), sig))
+                    pub.verify(msg.toByteArray(Charset.forName("UTF-8")), sig)
+
+                } ?: false
             }
         }.step {
             tx.outputs.all { output ->
@@ -69,7 +81,7 @@ class TransactionValidator : KoinComponent{
 
 }
 
-class VerifyChain(){
+class VerifyChain(val name: String){
 
     val steps = mutableListOf<() -> Boolean>()
 
@@ -82,7 +94,7 @@ class VerifyChain(){
         for((index, step) in steps.withIndex()){
             val res = step()
             if(!res){
-                println("Validation failed at step $index")
+                utils.error { "Validation failed at step $index of verification $name" }
                 return false
             }
         }

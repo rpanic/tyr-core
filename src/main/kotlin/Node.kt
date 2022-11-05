@@ -4,6 +4,7 @@ import network.Peer
 import network.PeerPool
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import utils.info
 import java.net.ServerSocket
 import java.net.Socket
 
@@ -15,6 +16,8 @@ object Node : KoinComponent {
 
     fun start(){
 
+        info { "Starting Tyr-Core v${Config.CLIENT_VERSION}" }
+
         Thread {
             Thread.sleep(1000)
 
@@ -22,7 +25,7 @@ object Node : KoinComponent {
         }.start()
 
         val socket = ServerSocket(18018)
-        println("Listing on port 18018...")
+        info { "Listening on port 18018..." }
         while(!socket.isClosed){
             val conn = socket.accept()
 

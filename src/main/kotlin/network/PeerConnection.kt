@@ -1,5 +1,6 @@
 package network
 
+import utils.*
 import java.net.Socket
 
 class PeerConnection(val peer: Peer) {
@@ -13,10 +14,10 @@ class PeerConnection(val peer: Peer) {
             conn.init(openSocket())
             conn.setConnectionLost(::openSocket)
             conn.handler = Node.incomingHandler()
-            println("Init")
+            debug ("peer" to peer.getAddress()) { "Init PeerConnection" }
             hello()
         }catch(e: Exception){
-            println("Connection to peer $peer failed")
+            debug ("peer" to peer.getAddress()) { "Connection to peer $peer failed" }
             null
         }
     }
@@ -26,7 +27,7 @@ class PeerConnection(val peer: Peer) {
         conn.setConnectionLost(::openSocket)
         conn.handler = Node.incomingHandler()
         hello()
-        println("Init with incoming connection successful")
+        debug { "Init with incoming connection successful" }
     }
 
     private fun openSocket() : Socket?{
@@ -35,7 +36,7 @@ class PeerConnection(val peer: Peer) {
         if (socket.isConnected) {
             return socket
         } else {
-            println("Failed to establish socket to $peer")
+            info ("peer" to peer.getAddress()) { "Failed to establish socket to $peer" }
         }
         return null
     }

@@ -1,32 +1,37 @@
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import blockchain.TransactionValidator
 import model.Transaction
-import network.Hello
-import network.KarmaObject
-import network.Promise
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import utils.info
 
 fun main(){
 
 //    println(Json.encodeToString(Hello("0.7.0", "client") as KarmaObject))
 
+    KoinSetup.setup()
+
     val tx = Transaction(
         inputs = listOf(
             Transaction.TransactionInput(
-                Transaction.TransactionInput.TransactionOutpoint("f71408bf847d7dd15824574a7cd4afdfaaa2866286910675cd3fc371507aa196", 0),
-                "3869a9ea9e7ed926a7c8b30fb71f6ed151a132b03fd5dae764f015c98271000e7da322dbcfc97af7931c23c0fae060e102446ccff0f54ec00f9978f3a69a6f0f"
+                Transaction.TransactionInput.TransactionOutpoint("1bb37b637d07100cd26fc063dfd4c39a7931cc88dae3417871219715a5e374af", 0),
+                "1d0d7d774042607c69a87ac5f1cdf92bf474c25fafcc089fe667602bfefb0494726c519e92266957429ced875256e6915eb8cea2ea66366e739415efc47a6805"
             )
         ),
         outputs = listOf(
             Transaction.TransactionOutput(
-                "077a2683d776a71139fd4db4d00c16703ba0753fc8bdc4bd6fc56614e659cde3", 5100000000
+                "8dbcd2401c89c04d6e53c81c90aa0b551cc8fc47c0469217c8f5cfbae1e911f9", 10
             )
         ),
     )
 
     println(tx.json())
 
+    println(tx.hash())
+
+    val vali = TransactionValidator()
+
+    vali.db.put("1bb37b637d07100cd26fc063dfd4c39a7931cc88dae3417871219715a5e374af", Transaction(inputs = listOf(), outputs = listOf(
+        Transaction.TransactionOutput("1bb37b637d07100cd26fc063dfd4c39a7931cc88dae3417871219715a5e374af", 10))))
+
+    println(vali.validate(tx))
 
 //    val promise = Promise<String>()
 //

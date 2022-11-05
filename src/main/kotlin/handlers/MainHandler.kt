@@ -5,6 +5,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.Error
 import network.MultiWayConnection
+import utils.debug
 
 class MainHandler {
 
@@ -36,7 +37,7 @@ class MainHandler {
 
     fun defaultHandler(c: MultiWayConnection, s: String) : String{
 
-        println("Message not supported: $s")
+        debug("peer" to c.underlyingConnection.peer.getAddress()) {"Message not supported: $s"}
         return Json.encodeToString(Error("Unsupported message type received"))
 
     }

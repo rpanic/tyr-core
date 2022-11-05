@@ -1,4 +1,4 @@
-## Tyr
+# Tyr
 
 [![Build Status](https://drone.rpanic.com/api/badges/rpanic/tyr-core/status.svg)](https://drone.rpanic.com/rpanic/tyr-core)
 

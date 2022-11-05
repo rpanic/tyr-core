@@ -3,10 +3,10 @@ package model
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import net.i2p.crypto.eddsa.EdDSAEngine
+import kotlinx.serialization.json.encodeToJsonElement
 import network.KarmaObject
 import utils.Sha256
+import utils.canonicalize
 
 @Serializable
 data class Transaction(
@@ -20,7 +20,7 @@ data class Transaction(
     @Serializable
     data class TransactionInput(
         val outpoint: TransactionOutpoint,
-        val sig: String
+        var sig: String?
     ){
         @Serializable
         data class TransactionOutpoint(
@@ -35,12 +35,21 @@ data class Transaction(
         val value: Long
     )
 
-    fun json() = Json.encodeToString(this)
+    fun json() : String {
+        val element = Json.encodeToJsonElement(this)
+        val canonicalized = canonicalize(element)
+        return Json.encodeToString(canonicalized)
+    }
 
     fun hash() : String {
 
-        return Sha256.hash(json())
+        return Sha256.hashText(json())
 
+    }
+
+    fun jsonWithoutSig() : String {
+        val tx2 = this.copy(inputs = inputs?.map { TransactionInput(it.outpoint, null) })
+        return tx2.json()
     }
 
 }

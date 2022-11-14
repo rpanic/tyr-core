@@ -57,8 +57,8 @@ class TransactionValidator : KoinComponent{
 
                     val pub = Ed25519PublicKey.fromByteArray(output.pubkey.fromHex()!!)
                     val sig = Ed25519Signature.fromByteArray(it)
-                    println(pub.verify(msg.toByteArray(Charset.forName("UTF-8")), sig))
-                    pub.verify(msg.toByteArray(Charset.forName("UTF-8")), sig)
+                    println(pub.verify(msg.toByteArray(), sig))
+                    pub.verify(msg.toByteArray(), sig)
 
                 } ?: false
             }

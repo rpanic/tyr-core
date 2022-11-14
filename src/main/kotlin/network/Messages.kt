@@ -37,6 +37,11 @@ data class Object(
 ) : KarmaObject("object")
 
 @Serializable
+data class TypedObject<T>(
+    val `object`: T
+) : KarmaObject("object")
+
+@Serializable
 data class Error(
     val error: String
 ) : KarmaObject("error")

@@ -5,6 +5,7 @@ import com.toddway.shelf.FileStorage
 import com.toddway.shelf.KotlinxSerializer
 import com.toddway.shelf.Shelf
 import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.json.*
 import model.Transaction
 import network.Block
 import network.KarmaObject
@@ -21,16 +22,22 @@ class ObjectStorage {
         return item(key).get(T::class)
     }
 
+    fun exists(key: String) = item(key).getRaw() != null
+
     fun <T : Any> put(key: String, o: T) {
         db.item(key).put(o)
     }
 
-    fun getHighestPossibleKarmaObject(key: String) : KarmaObject? {
+    fun getHighestPossibleKarmaObject(key: String) : JsonElement? {
 
-        val base = get<KarmaObject>(key)
-        return if(base != null){
-            val type = typeMap[base.type]!!
-            item(key).get(type)
+        val raw = item(key).getRaw()
+        return if(raw != null) {
+            val jsonElement = Json.parseToJsonElement(raw)
+            jsonElement
+//            println(raw)
+//            println("123 ${jsonElement.jsonObject.get("type")!!.jsonPrimitive.content}")
+//            val type = typeMap[jsonElement.jsonObject.get("type")!!.jsonPrimitive.content]!!
+//            item(key).get(type)
         }else{
             null
         }

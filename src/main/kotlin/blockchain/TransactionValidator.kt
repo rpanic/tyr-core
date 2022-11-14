@@ -33,14 +33,13 @@ class TransactionValidator : KoinComponent{
     fun validate(tx: Transaction) : Boolean {
 
         //Coinbase tx
-        if(tx.inputs == null && tx.outputs.isNotEmpty()){
-            VerifyChain("verifyCoinbase")
+        if((tx.inputs == null || tx.inputs.isEmpty()) && tx.outputs.isNotEmpty()){
+            return VerifyChain("verifyCoinbase")
                 .step(TxValidity.COINBASE_MULTIPLE_OUTPUTS) {
-                    tx.outputs.size > 1
+                    tx.outputs.size == 1
                 }.step(TxValidity.COINBASE_INDEX_NEGATIVE) {
                     tx.height != null && tx.height >= 0
-                }
-            return true
+                }.verify()
         }
 
         if(!validateFormat(tx)) return false

@@ -34,7 +34,7 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
     val activeAttempts = AtomicInteger(0)
 
     private fun addPeer(peer: Peer) : Boolean {
-        if(peer.ip.hostAddress !in PEER_BLACKLIST){
+        if(Config.config.network.enableLocalhost || peer.ip.hostAddress !in PEER_BLACKLIST){
             peerQueue += peer
 
             if(activeAttempts.get() < 5) {
@@ -94,6 +94,8 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
         }
     }
 
+    //bootstrapNode: "128.130.122.101:18018"
+
     fun startRoutine(){
         Thread{
 
@@ -102,6 +104,7 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
                 try{
 
                     if(peers.isEmpty() && peerQueue.isEmpty()){
+                        debug { "Adding bootstrap peers to queue... ${bootstrapPeers.map { it.getAddress() }}" }
                         peerQueue.addAll(bootstrapPeers)
                     }
 
@@ -114,7 +117,7 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
 
                     //Add peers if necessary
                     val peers = this.getPeers()
-                    if(peers.size < config.network.maxPeers){
+                    if(peers.size + peerQueue.size < config.network.maxPeers){
 
                         val peer = peers.minByOrNull { it.lastAskedForPeers }
                         if(peer != null) {

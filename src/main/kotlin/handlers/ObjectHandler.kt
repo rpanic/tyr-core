@@ -3,7 +3,7 @@ package handlers
 import blockchain.TransactionValidator
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 import model.Transaction
 import network.Error
 import network.GetObject
@@ -24,8 +24,8 @@ class ObjectHandler : Handler, KoinComponent {
 
         route<IHaveObject, GetObject?>("ihaveobject") {
 
-            val t = storage.get<KarmaObject>(it.objectid)
-            if(t == null){
+            val t = storage.exists(it.objectid)
+            if(t){
 
                 GetObject(it.objectid)
 
@@ -34,34 +34,50 @@ class ObjectHandler : Handler, KoinComponent {
             }
         }
 
-        route<GetObject, Object?>("getobject"){
+        route<GetObject, JsonObject?>("getobject"){
 
             val o = storage.getHighestPossibleKarmaObject(it.objectid)
             if(o != null){
-                Object(o)
+                val e = JsonObject(mapOf(
+                    "type" to JsonPrimitive("object"),
+                    "object" to o
+                ))
+                e
             }else{
                 null
             }
 
         }
 
-        route<Object, KarmaObject?>("object"){
+        route<Object, Error?>("object"){
 
             val obj = it.`object`
 
-            var ret: KarmaObject? = null
+            var ret: Error? = null
 
             if(obj.type == "transaction"){
-                val tx = Json.decodeFromString<Transaction>(this.rawString)
+
+                val el = Json.parseToJsonElement(this.rawString) //TODO In storage class auslagern
+                val txObj = el.jsonObject.get("object")!!
+                val tx = Json.decodeFromJsonElement<Transaction>(txObj)
+//                Json.decodeFromString<Transaction>(this.rawString)
 
                 if(txValidator.validate(tx)){
 
-                    storage.put(tx.hash(), tx)
-                    debug("object" to tx.hash()) { "Stored new tx ${tx.hash()}, gossiping" }
+                    if(!storage.exists(tx.hash())) {
 
-                    Thread {
-                        Node.broadcast(Json.encodeToString(IHaveObject(tx.hash())), listOf(this.conn.underlyingConnection.peer))
-                    }.start()
+                        storage.put(tx.hash(), tx)
+                        debug("object" to tx.hash()) { "Stored new tx ${tx.hash()}, gossiping" }
+
+                        Thread {
+                            Node.broadcast(
+                                Json.encodeToString(IHaveObject(tx.hash())),
+                                listOf(this.conn.underlyingConnection.peer)
+                            )
+                        }.start()
+                    }else{
+                        debug("object" to tx.hash()) { "Object already in storage" }
+                    }
 
                 }else{
                     ret = Error("Tx Validation failed")

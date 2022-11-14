@@ -22,15 +22,17 @@ class PeerPoolLoader {
         }
 
         return PeerPool(
-            peers.filter { it.ip.hostAddress !in PeerPool.PEER_BLACKLIST }
+            peers.filter { Config.config.network.enableLocalhost || it.ip.hostAddress !in PeerPool.PEER_BLACKLIST }
         )
 
     }
 
     fun storePeerList(pool: PeerPool){
 
-        val file = Config.config.storage.getStorageDirectory().resolve("peers.txt")
-        file.writeText(pool.getPeers().joinToString("\n") { it.getAddress() })
+        if(Config.config.storage.persistPeers) {
+            val file = Config.config.storage.getStorageDirectory().resolve("peers.txt")
+            file.writeText(pool.getPeers().joinToString("\n") { it.getAddress() })
+        }
 
     }
 

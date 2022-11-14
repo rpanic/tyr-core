@@ -14,7 +14,7 @@ object Node : KoinComponent {
 
     val mainHandler = MainHandler()
 
-    fun start(){
+    fun start(port: Int = Config.config.network.bind){
 
         info { "Starting Tyr-Core v${Config.CLIENT_VERSION}" }
 
@@ -24,8 +24,8 @@ object Node : KoinComponent {
             peerPool.startRoutine()
         }.start()
 
-        val socket = ServerSocket(18018)
-        info { "Listening on port 18018..." }
+        val socket = ServerSocket(port)
+        info { "Listening on port $port..." }
         while(!socket.isClosed){
             val conn = socket.accept()
 

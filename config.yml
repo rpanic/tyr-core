@@ -1,7 +1,10 @@
 network:
   bootstrapNode: "128.130.122.101:18018"
-  maxPeers: 40
+  maxPeers: 20
+  bind: 18018
+  enableLocalhost: false
 storage:
   storageDir: "data"
+  persistPeers: true
 logging:
   json: false

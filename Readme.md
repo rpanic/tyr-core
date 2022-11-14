@@ -5,3 +5,9 @@
 Tyr-core is a implementation of the Kerma-Protocol specification used at the course "Cryptocurrencies" at TU Wien in WS22.
 
 It implements a UTXO-based cryptocurrency from scratch in Kotlin.
+
+## Usage
+
+- Install docker
+- Execute `run.sh`
+- Tyr is available on `localhost:18018`

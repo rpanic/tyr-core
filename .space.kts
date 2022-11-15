@@ -1,6 +1,6 @@
 job("build") {
     host("Build and push docker image") {
-        env["PW"] = Secrets("registry-pw")
+        env["PW"] = Secrets("registry_pw")
         shellScript {
             val pw = System.getenv("PW")
             content = """

@@ -1,6 +1,11 @@
 package network
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
+import utils.Sha256
+import utils.canonicalize
 
 @Serializable
 open class KarmaObject(
@@ -59,6 +64,18 @@ data class Block(
     val note: String
 
 ) : KarmaObject("block"){
+
+    fun json() : String {
+        val element = Json.encodeToJsonElement(this)
+        val canonicalized = canonicalize(element)
+        return Json.encodeToString(canonicalized)
+    }
+
+    fun hash() : String {
+
+        return Sha256.hashText(json())
+
+    }
 
 }
 

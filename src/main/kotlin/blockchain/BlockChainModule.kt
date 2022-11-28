@@ -8,6 +8,9 @@ object BlockChainModule {
         single {
             TransactionValidator()
         }
+        single{
+            BlockValidator()
+        }
 
     }
 }

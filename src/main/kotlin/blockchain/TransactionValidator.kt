@@ -14,7 +14,7 @@ class TransactionValidator : KoinComponent{
 
     fun validateFormat(tx: Transaction) : Boolean{
 
-        return VerifyChain("verifyTxFormat")
+        return VerifyChain("verifyTxFormat", TxValidity.VALID)
             .step(TxValidity.INVALID_FORMAT) {
                 tx.inputs != null
             }
@@ -30,21 +30,31 @@ class TransactionValidator : KoinComponent{
 
     }
 
+    fun validateCoinbase(tx: Transaction) : Boolean{
+        return VerifyChain("verifyCoinbase", TxValidity.VALID)
+            .step(TxValidity.COINBASE_MULTIPLE_OUTPUTS) {
+                tx.outputs.size == 1
+            }.step(TxValidity.COINBASE_MULTIPLE_OUTPUTS) {
+                tx.inputs == null || tx.inputs.isEmpty()
+            }.step(TxValidity.COINBASE_INDEX_NEGATIVE) {
+                tx.height != null && tx.height >= 0
+            }
+            .step(TxValidity.INVALID_FORMAT){
+                tx.outputs[0].pubkey.fromHex() != null
+            }
+            .verify()
+    }
+
     fun validate(tx: Transaction) : Boolean {
 
         //Coinbase tx
         if((tx.inputs == null || tx.inputs.isEmpty()) && tx.outputs.isNotEmpty()){
-            return VerifyChain("verifyCoinbase")
-                .step(TxValidity.COINBASE_MULTIPLE_OUTPUTS) {
-                    tx.outputs.size == 1
-                }.step(TxValidity.COINBASE_INDEX_NEGATIVE) {
-                    tx.height != null && tx.height >= 0
-                }.verify()
+            return validateCoinbase(tx)
         }
 
         if(!validateFormat(tx)) return false
 
-        return VerifyChain("verifyTxContent").step(TxValidity.OUTPOINT_INDEX_TOO_BIG) {
+        return VerifyChain<TxValidity>("verifyTxContent", TxValidity.VALID).step(TxValidity.OUTPOINT_INDEX_TOO_BIG) {
             tx.inputs!!.all {
                 val outpoint = db.get<Transaction>(it.outpoint.txid)
                 if(outpoint != null){
@@ -70,7 +80,12 @@ class TransactionValidator : KoinComponent{
                 output.pubkey.fromHex() != null &&
                     output.value >= 0
             }
-        } .step(TxValidity.OUTPUTS_GREATER_THAN_INPUTS) {
+        }.step(TxValidity.DOUBLE_INPUT){
+
+            val l = tx.inputs!!.map { it.outpoint.txid + it.outpoint.index }
+            l.size == l.distinct().size
+
+        }.step(TxValidity.OUTPUTS_GREATER_THAN_INPUTS) {
             val inputSum = tx.inputs!!.sumOf {
                 val outpoint = db.get<Transaction>(it.outpoint.txid)
                 outpoint!!.outputs[it.outpoint.index].value
@@ -91,30 +106,39 @@ enum class TxValidity {
     INVALID_FORMAT,
     OUTPUTS_GREATER_THAN_INPUTS,
     NO_OUTPUTS,
+    DOUBLE_INPUT,
 
     COINBASE_MULTIPLE_OUTPUTS,
     COINBASE_INDEX_NEGATIVE
+    ;
+
 }
 
-class VerifyChain(val name: String){
+class VerifyChain<T: Enum<T>>(val name: String, val validValue: T){
 
-    val steps = mutableListOf<() -> TxValidity>()
+    val steps = mutableListOf<() -> T>()
 
-    fun step(f: () -> TxValidity) : VerifyChain {
+    fun step(f: () -> T) : VerifyChain<T> {
         steps += f
         return this
     }
 
-    fun step(errorCode: TxValidity, f: () -> Boolean) : VerifyChain {
-        steps += { if(f()) TxValidity.VALID else errorCode }
+    fun step(errorCode: T, f: () -> Boolean) : VerifyChain<T> {
+        steps += { if(f()) validValue else errorCode }
         return this
     }
 
     fun verify() : Boolean {
         for((index, step) in steps.withIndex()){
-            val res = step()
-            if(res != TxValidity.VALID){
-                utils.error { "Validation failed at step $index of verification $name: ${res.name}" }
+            try {
+                val res = step()
+                if (res != validValue) {
+                    utils.error { "Validation failed at step $index of verification $name: ${res.name}" }
+                    return false
+                }
+            }catch (e: Exception){
+                utils.error { (e.javaClass.simpleName + ": " + e.message) }
+//                e.printStackTrace()
                 return false
             }
         }

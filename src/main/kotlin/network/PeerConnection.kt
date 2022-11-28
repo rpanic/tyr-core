@@ -1,5 +1,7 @@
 package network
 
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import utils.*
 import java.net.Socket
 
@@ -65,6 +67,11 @@ class PeerConnection(val peer: Peer) {
 
         this.conn.sendMessageNoResponse(msg)
 
+    }
+
+    fun getObject(id: String) : Promise<String>{
+        val msg = Json.encodeToString(GetObject(id))
+        return this.conn.sendMessage(msg, "object")
     }
 
     fun getPeers() : PromiseResult<Peers> = peerConnectionBody{

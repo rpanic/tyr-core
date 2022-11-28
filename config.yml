@@ -8,3 +8,5 @@ storage:
   persistPeers: true
 logging:
   json: false
+consensus:
+  blockTarget: "00000002af000000000000000000000000000000000000000000000000000000"

@@ -23,6 +23,7 @@ class Promise<T> {
         lock.withLock {
             cond.signalAll()
         }
+        listeners.forEach { it(t) }
     }
 
     fun resolveError(){
@@ -45,9 +46,41 @@ class Promise<T> {
         return PromiseResult(t, err)
     }
 
+    private val listeners: MutableList<(T) -> Unit> = mutableListOf()
+
+    fun onResolve(f: (T) -> Unit) {
+        listeners += f
+    }
+
     fun isResolved() : Boolean = t != null
 
     fun isResolvedOk() : Boolean = isResolved() && !err
+
+    companion object {
+        fun <T> awaitFirst(list: List<Promise<T>>) : T? {
+            val lock = ReentrantLock()
+            val cond = lock.newCondition()
+
+            var t: T? = null
+
+            list.forEach { p ->
+                p.onResolve {
+                    if(it != null){
+                        t = it
+                        lock.withLock {
+                            cond.signalAll()
+                        }
+                    }
+                }
+            }
+            lock.withLock {
+                cond.await(10, TimeUnit.SECONDS)
+            }
+
+            return t
+
+        }
+    }
 
     fun <R> map(f: (T) -> R) : Promise<R> {
 

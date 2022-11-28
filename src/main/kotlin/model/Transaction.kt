@@ -52,4 +52,8 @@ data class Transaction(
         return tx2.json()
     }
 
+    fun isCoinbase() : Boolean {
+        return (inputs == null || inputs.isEmpty()) && (height != null && height >= 0)
+    }
+
 }

@@ -1,10 +1,12 @@
 package storage
 
 import Config
+import blockchain.Utxo
 import com.toddway.shelf.FileStorage
 import com.toddway.shelf.KotlinxSerializer
 import com.toddway.shelf.Shelf
 import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import model.Transaction
 import network.Block
@@ -52,3 +54,10 @@ class ObjectStorage {
     }
 
 }
+
+@Serializable
+data class ProcessedBlock(
+    val block: Block?,
+    val utxoSet: List<Utxo>,
+    val height: Long
+)

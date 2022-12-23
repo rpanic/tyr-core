@@ -1,6 +1,7 @@
 package handlers
 
 import blockchain.BlockValidator
+import blockchain.Blockchain
 import blockchain.TransactionValidator
 import blockchain.UtxoSet
 import kotlinx.serialization.decodeFromString
@@ -20,6 +21,7 @@ class ObjectHandler : Handler, KoinComponent {
     val storage by inject<ObjectStorage>()
     val txValidator by inject<TransactionValidator>()
     val blockValidator by inject<BlockValidator>()
+    val blockchain by inject<Blockchain>()
 
     override fun routes(handler: MainHandler) = handler.apply {
 
@@ -120,10 +122,11 @@ class ObjectHandler : Handler, KoinComponent {
                     if(acc == null) return@fold null
 
                     val set = UtxoSet(acc.utxoSet.toMutableList()).createNew()
-                    if(blockValidator.validateBlock(b, set, acc.block)){
+                    if(blockValidator.validateBlock(b, set, acc.block, acc.height)){
                         storage.put(b.hash(), b)
                         val pb = ProcessedBlock(b, set.getUtxos(), acc.height + 1)
                         storage.put(b.hash() + "_processed", pb)
+                        blockchain.addBlock(b, acc.height + 1)
 
                         debug("object" to b.hash()) { "Stored new block ${b.hash()} in storage" }
 

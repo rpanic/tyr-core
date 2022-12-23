@@ -80,7 +80,11 @@ data class Block(
 }
 
 
+@Serializable
+class GetChainTip : KarmaObject("getchaintip")
 
+@Serializable
+data class ChainTip(val blockid: String) : KarmaObject("chaintip")
 
 
 

@@ -74,7 +74,7 @@ fun test2(){
     val b = BlockValidator()
     b.db.put(tx.hash(), tx)
 
-    val v = b.validateBlock(block, UtxoSet(), null)
+    val v = b.validateBlock(block, UtxoSet(), null, -1)
     println(v)
 
 
@@ -158,7 +158,7 @@ fun main(){
         val prev = block.previd?.let { validator.db.get<Block>(it) }
 
         val nus = utxoSet.createNew()
-        val valid = bvalidator.validateBlock(block, nus, prev)
+        val valid = bvalidator.validateBlock(block, nus, prev, height - 1)
 
         println("Valid: $valid")
         if(valid){

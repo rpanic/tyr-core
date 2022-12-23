@@ -17,7 +17,7 @@ class BlockValidator : KoinComponent {
     val db by inject<ObjectStorage>()
     val txvalidator by inject<TransactionValidator>()
 
-    fun validateBlock(block: Block, utxoSet: UtxoSet, previous: Block?) : Boolean{
+    fun validateBlock(block: Block, utxoSet: UtxoSet, previous: Block?, previousHeight: Long) : Boolean{
 
         //Validate Format
         val formatValid = VerifyChain("verifyBlock: Format", BlockValidation.VALID)
@@ -57,12 +57,12 @@ class BlockValidator : KoinComponent {
                     var tx = db.get<Transaction>(it)
                     if(tx == null){
 
-                        throw IllegalStateException("123")
+//                        throw IllegalStateException("123")
 
                         //Get tx from peers
                         tx = Node.retrieveObjectFromPeers<Transaction>(it)
 
-                        if(tx != null){
+                        if(tx != null && txvalidator.validate(tx)){
                             db.put(tx.hash(), tx)
                         }
 
@@ -94,6 +94,8 @@ class BlockValidator : KoinComponent {
                         var valid = coinbase.hash() == block.txids[0] //Coinbase has to be at index 0
 
                         valid = valid && txcache.none { it.inputs?.any { i -> i.outpoint.txid == block.txids[0] } ?: false } //check that coinbase is not spent
+
+                        valid = valid && (block.previd == null || coinbase.height!! == previousHeight + 1)
 
                         valid && txvalidator.validateCoinbase(coinbase)
                     }else{

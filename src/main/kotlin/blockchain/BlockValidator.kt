@@ -27,9 +27,9 @@ class BlockValidator : KoinComponent {
                 block.nonce.length < 100 &&
                         block.nonce.fromHex() != null
             }.step(BlockValidation.INVALID_FORMAT){
-                block.miner.length <= 128
+                block.miner.length <= 128 && block.miner.all { it.code in 32..126 }
             }.step(BlockValidation.INVALID_FORMAT){
-                block.note.length <= 128
+                block.note.length <= 128 && block.note.all { it.code in 32..126 }
             }
             .verify()
 
@@ -139,22 +139,10 @@ class BlockValidator : KoinComponent {
                 }
 
                 txcache.skip(if(coinbaseCache != null) 1 else 0).all { tx ->
-                    val inputs = tx.inputs!!.map { input ->
-                        val utxo = utxoSet.getUtxos().find {
-                            it.txid == input.outpoint.txid &&
-                            it.index == input.outpoint.index
-                        } ?: return@step false
-                        utxo
-                    }
-                    val outputs = tx.outputs.mapIndexed { index, output ->
-                        Utxo(
-                            tx.hash(),
-                            index,
-                            output.value,
-                            1
-                        )
-                    }
+
+                    val (inputs, outputs) = tx.toUtxos(utxoSet) ?: return@step false
                     utxoSet.spend(inputs, outputs)
+
                 }
             }
             .verify()
@@ -162,6 +150,7 @@ class BlockValidator : KoinComponent {
         return valid
 
     }
+
 
 }
 

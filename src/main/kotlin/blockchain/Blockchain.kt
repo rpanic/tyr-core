@@ -5,6 +5,7 @@ import network.Block
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import storage.ObjectStorage
+import utils.debug
 
 class Blockchain(
     var longestTip: Block,
@@ -22,8 +23,16 @@ class Blockchain(
     }
 
     fun changed(){
+
+        debug {"Longest chain now $longestTipHeight" }
+
         db.put(DB_KEY, LongestChainTip(longestTipHeight, longestTip.hash()))
+        longestTipListener.forEach {
+            it(longestTip, longestTipHeight)
+        }
     }
+
+    val longestTipListener = mutableListOf<(Block, Long) -> Unit>()
 
     fun getChainTip() = longestTip
 

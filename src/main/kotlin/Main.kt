@@ -1,8 +1,6 @@
 import network.PeerPool
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.koin.java.KoinJavaComponent
-import java.util.concurrent.locks.Condition
 
 fun main(){
 

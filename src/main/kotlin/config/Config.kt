@@ -12,7 +12,7 @@ data class Config (
 
         var config: Config = loadFromFile("config.yml")
 
-        val CLIENT_VERSION = "Tyr-Core 0.2"
+        val CLIENT_VERSION = "Tyr-Core 0.5"
 
         fun loadFromFile(name: String) : Config {
             val c = ConfigLoader().loadConfigOrThrow<Config>(File(System.getProperty("user.dir") + File.separator + name))

@@ -86,7 +86,13 @@ class GetChainTip : KarmaObject("getchaintip")
 @Serializable
 data class ChainTip(val blockid: String) : KarmaObject("chaintip")
 
+@Serializable
+class GetMempool : KarmaObject("getmempool")
 
+@Serializable
+data class Mempool(
+    val txids: List<String>
+) : KarmaObject("mempool")
 
 
 

@@ -1,5 +1,7 @@
 package blockchain
 
+import model.BlockSyncer
+import model.MemPoolInstance
 import network.Block
 import org.koin.dsl.module
 import storage.ObjectStorage
@@ -23,6 +25,14 @@ object BlockChainModule {
         }
         single{
             BlockValidator()
+        }
+
+        single{
+            BlockSyncer()
+        }
+
+        single {
+            MemPoolInstance()
         }
 
     }

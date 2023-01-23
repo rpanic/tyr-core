@@ -1,14 +1,13 @@
 package blockchain
 
 import kotlinx.serialization.Serializable
-import network.Block
 
 class UtxoSet constructor(val list: MutableList<Utxo>) {
 
     constructor() : this(mutableListOf()){
     }
 
-    var valid = true
+//    var valid = true
 
     fun addCoinbase(outputs: Utxo) : Boolean {
         return list.add(outputs)
@@ -16,21 +15,23 @@ class UtxoSet constructor(val list: MutableList<Utxo>) {
 
     fun spend(spends: List<Utxo>, newOutputs: List<Utxo>) : Boolean{
 
-        if(!valid) return false
+//        if(!valid) return false
 
-        if(!newOutputs.all { it.fromBlock >= 0 }) invalidOperation()
+        if(!newOutputs.all { it.fromBlock >= 0 }) return false
 
-        if(!list.removeAll(spends)) invalidOperation()
-        if(!list.addAll(newOutputs)) invalidOperation()
+        if(!list.containsAll(spends)) return false
+
+        list.removeAll(spends)
+        list.addAll(newOutputs)
 
         return true
 
     }
 
-    fun invalidOperation() : Boolean {
-        valid = false
-        return false
-    }
+//    fun invalidOperation() : Boolean {
+//        valid = false
+//        return false
+//    }
 
     fun totalSupply() : Long{
         return list.sumOf { it.value }

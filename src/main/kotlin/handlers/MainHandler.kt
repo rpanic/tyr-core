@@ -3,7 +3,6 @@ package handlers
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import network.Error
 import network.MultiWayConnection
 import utils.debug
@@ -17,7 +16,8 @@ class MainHandler {
         listOf(
 
             PeerHandler(),
-            ObjectHandler()
+            ObjectHandler(),
+            ConsensusHandler()
 
         ).forEach {
             it.routes(this)

@@ -1,5 +1,7 @@
 package model
 
+import blockchain.Utxo
+import blockchain.UtxoSet
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -54,6 +56,36 @@ data class Transaction(
 
     fun isCoinbase() : Boolean {
         return (inputs == null || inputs.isEmpty()) && (height != null && height >= 0)
+    }
+
+
+    fun toUtxos(utxoSet: UtxoSet) : Pair<List<Utxo>, List<Utxo>>? {
+
+        val inputs = this.inputs!!.map { input ->
+            val utxo = utxoSet.getUtxos().find {
+                it.txid == input.outpoint.txid &&
+                        it.index == input.outpoint.index
+            } ?: return null
+            utxo
+        }
+        val outputs = this.outputs.mapIndexed { index, output ->
+            Utxo(
+                this.hash(),
+                index,
+                output.value,
+                1
+            )
+        }
+
+        return inputs to outputs
+
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return if(other is Transaction)
+            this.hash() == other.hash()
+        else
+            super.equals(other)
     }
 
 }

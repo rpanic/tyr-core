@@ -60,7 +60,14 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
             peer.getOrOpenPeerConnection { res ->
                 if (res != null && res.isOk()) {
                     peers += peer
-                    info("peer" to peer.getAddress()) { "Added peer ${peer.getAddress()}" }
+                    val helloResult = res.res!!
+                    info("peer" to peer.getAddress(), "agent" to helloResult.agent, "version" to helloResult.version)
+                        { "Added peer ${helloResult.agent}:${helloResult.version} ${peer.getAddress()}" }
+
+                    newPeerListener.forEach {
+                        it(peer)
+                    }
+
                 } else {
                     info ("peer" to peer.getAddress()) { "Dropped peer ${peer.getAddress()} from queue" }
                 }
@@ -93,6 +100,8 @@ class PeerPool(val bootstrapPeers: List<Peer>) : KoinComponent {
             info ("peer" to newPeer.getAddress()) { "Added receiving peer connection $newPeer" }
         }
     }
+
+    val newPeerListener = mutableListOf<(Peer) -> Unit>()
 
     //bootstrapNode: "128.130.122.101:18018"
 
